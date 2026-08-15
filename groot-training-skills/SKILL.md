@@ -1,6 +1,6 @@
 ---
 name: groot-training-skills
-description: NVIDIA GR00T N1.7 (3B VLA) を LeRobot 0.6.0 で独自データセット (LeRobotDataset v3) にファインチューンし、実機自律動作 (lerobot-rollout) まで実施するスキル。Jetson AGX Thor (JetPack 7 / CUDA 13, unified memory 122GB) での実機構築・3ポリシー比較評価 (2026-08) で検証済みの手順と実測値に基づく。
+description: NVIDIA GR00T N1.7 (3B VLA) を LeRobot 0.6.0 で独自データセット (LeRobotDataset v3) にファインチューンし、実機自律動作 (lerobot-rollout) まで実施するスキル。Jetson AGX Thor (JetPack 7 / CUDA 13, unified memory 122GB) での実機構築・5ポリシー比較評価 (2026-08) で検証済みの手順と実測値に基づく。
 ---
 
 # 概要

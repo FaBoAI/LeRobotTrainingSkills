@@ -176,13 +176,15 @@ unified memory の Thor では学習 (35.9GB) + 推論モデルの同時常駐�
 | 推論がスローモーション (sync) | 仕様 (約 4Hz、CPU 前処理 240ms 律速) | 許容するか前処理最適化 (§5)。学習の質の問題ではない |
 | チェックポイントが無い | `ls <output_dir>/checkpoints/` | `save_freq` と総 steps を確認 (5000 の倍数 + last) |
 
-## 8. 3ポリシー比較の位置づけ (同一データセット・同一ロボット、参考)
+## 8. 5ポリシー比較の位置づけ (同一データセット・同一ロボット、参考)
 
 | ポリシー | 学習実測 (Thor) | 推論方式 | 実機評価 |
 |---|---|---|---|
 | ACT (chunk50) | 1080p batch2 30K で loss 0.143 / 640×360 batch8 15K で loss 0.114 | sync (RTC 非対応) | 完走・動作成立 |
 | SmolVLA (expert のみ 100M) | batch8 で 4.2 step/s、20K ≈ 80分 | **RTC OK** (chunk50+QT30) | 問題なし |
 | **GR00T N1.7 (1.6B 学習)** | **batch4 で 1.08〜1.12 step/s、15K ≈ 3.7h、loss 0.027** | **sync 採用** (RTC はカクつき) | 滑らか・把持成立 (4Hz スロー) |
+| VLA-JEPA | batch4 で 0.53 step/s、30K ≈ 15.8h、loss 0.302 | sync + K=32 平均 (RTC 非対応) | タスク不成立 (chunk=7 が主因の見立て) |
+| FastWAM (6B 学習) | batch4 で 3.04 s/step、15K ≈ 14.2h、loss 0.17 | sync + denoise 3 (RTC 指定禁止) | タスク成功・オフライン指標最良 |
 
-GR00T は 3 ポリシー中で最も重いが、new_embodiment の自動適応により
+GR00T は学習が重い部類 (FastWAM に次ぐ) だが、new_embodiment の自動適応により
 データセット側の加工 (rename 等) が一切不要という運用上の利点がある。

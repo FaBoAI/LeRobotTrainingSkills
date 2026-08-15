@@ -172,8 +172,8 @@ grep -n "VLAJEPA_SAMPLES" <venv>/lib/python3.12/site-packages/lerobot/policies/v
   記録されたが生ログ未保存のため**要再測定**)。
 - 把持動作を予測できず (正解はグリッパー軸が大きく閉じる区間で予測はほぼ静止。
   具体値 -62.7 / +0.3 は単発評価の記録で生ログ未保存 — **要再測定**)。
-- **同じデータセットで ACT / SmolVLA / GR00T は動作した** → データではなく
-  レシピ/モデル側の問題。
+- **同じデータセットで ACT / SmolVLA / GR00T / FastWAM は動作した** → データでは
+  なくレシピ/モデル側の問題。
 
 ### 敗因の見立て
 
@@ -181,7 +181,8 @@ grep -n "VLAJEPA_SAMPLES" <venv>/lib/python3.12/site-packages/lerobot/policies/v
 実演データの大半が静止〜低速区間のため、損失が静止区間に支配され、
 「直前値を出せば損失が下がる」局所解に落ちる (ホールド基準 MAE を下回れない・
 方向一致率がランダム以下、という観測と整合)。
-比較: 動作した ACT は chunk 50、GR00T は chunk 40、SmolVLA は chunk 50。
+比較: 動作した ACT は chunk 50、GR00T は chunk 40、SmolVLA は chunk 50、
+FastWAM は chunk 32。
 
 ### 再挑戦レシピ (未検証 — 実施したら結果を追記)
 

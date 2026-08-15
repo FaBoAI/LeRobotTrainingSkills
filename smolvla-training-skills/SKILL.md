@@ -8,7 +8,7 @@ description: LeRobot 0.6.0 の SmolVLA を lerobot/smolvla_base からファイ�
 収録済みの LeRobotDataset v3 を入力に、SmolVLA (`lerobot/smolvla_base`, 873MB) の
 ファインチューンを起動・監視し、学習済みチェックポイントを RTC 推論
 (`lerobot-rollout --inference.type=rtc`) で実機に流すまでを一気通貫で実施する。
-SmolVLA は本環境の 4 ポリシー比較 (ACT / SmolVLA / GR00T N1.7 / VLA-JEPA) で
+SmolVLA は本環境の 5 ポリシー比較 (ACT / SmolVLA / GR00T N1.7 / VLA-JEPA / FastWAM) で
 **学習が最速 (batch8 で 4.2 step/s、20K steps ≈ 80 分) かつ実機で RTC が滑らかに
 動作した唯一のポリシー**であり、実機評価での推奨ポリシーである。
 Jetson AGX Thor (unified memory 122GB) + lerobot 0.6.0 venv (torch 2.11.0+cu130) +
