@@ -129,6 +129,18 @@ nohup sh /path/to/run_train.sh > /path/to/train.log 2>&1 &
   ある。プロセス停止が必要なときは停止コマンドを提示してユーザーに実行して
   もらう。
 
+### シェルスクリプトは sh (dash) で動く前提で書く
+
+運用スクリプトは `nohup sh run_train.sh` のように **`sh` (Ubuntu では dash) で
+実行される**。shebang が `#!/bin/bash` でも `sh` 起動では無視されるため、
+bash 専用構文を書くと実行時に落ちる。既知の非互換:
+
+| bash 専用構文 | dash での症状 | 代替 |
+|---|---|---|
+| `$((10#$VAR))` (基数指定) | 「arithmetic expression: expecting EOF」で即死 (2026-08-15 実測) | 先頭ゼロ除去は `sed 's/^0*//'` (全ゼロは空になるので `${VAR:-0}` で補う。実例: run_train06_groot_resume.sh のチェックポイント番号 `015000`→`15000`) |
+| `source file` | 「source: not found」 | `. file` |
+| 配列 (`arr=(a b)` / `${arr[0]}`) | 「Syntax error: "(" unexpected」 | スペース区切り文字列 + for ループ / `set --` の位置パラメータ |
+
 ## 5. HF ダウンロードの hf-xet ハング
 
 ### 症状 (2026-08-13 実測)

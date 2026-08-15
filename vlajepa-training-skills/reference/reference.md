@@ -94,13 +94,18 @@ postprocessor はチェックポイントの `policy_postprocessor.json` から
   「state ≈ 直前の action」なデータセットでは正解の一部が入力に漏れる
   (ラベルリーク)。
 
-### 実測された影響と修正案
+### 実測された影響と修正
 
 - 評価の結果、**今回のモデルは state をほぼ無視していた** — 値崩壊 (バグ1) の
   原因ではなかった。ただし再挑戦時 (特に state 依存を高める設定) には修正すべき。
-- 最小修正案: `modeling_vla_jepa.py` の `state = state[:, -1, :]` を
-  `state = state[:, 0, :]` (時刻 t の state) にする。**この修正での再学習は未実施**
-  — 適用したら結果をここに追記すること。
+- 修正 (2026-08-15 適用済み): site-packages の `modeling_vla_jepa.py` の
+  `state = state[:, -1, :]` を `state = state[:, 0, :]` (時刻 t の state) に
+  パッチ (元ファイルは `.bak.stateleak` として退避)。
+- **venv 再構築 (lerobot 再インストール) で消える**ため、v2 学習スクリプト (§7)
+  は起動時に grep でパッチの存在を自己検証し、未適用なら中断する
+  (確認コマンドは §8)。
+- **この修正での学習結果は未検証** (§7 の v2 で検証予定) — 完了したら結果を
+  ここに追記すること。
 
 ## 4. チャンク内振動 (プルプル) と K サンプル平均パッチ
 
@@ -184,12 +189,22 @@ grep -n "VLAJEPA_SAMPLES" <venv>/lib/python3.12/site-packages/lerobot/policies/v
 比較: 動作した ACT は chunk 50、GR00T は chunk 40、SmolVLA は chunk 50、
 FastWAM は chunk 32。
 
-### 再挑戦レシピ (未検証 — 実施したら結果を追記)
+### 再挑戦レシピ v2 (2026-08-15 実装済み — 学習結果は未検証)
 
-1. `--policy.chunk_size=30 --policy.n_action_steps=30` (1秒先まで予測させる)
-2. state リーク修正 (§3) を先に適用
+実装 = `/home/jetson/RS/run_train06_vlajepa_v2.sh` (STEPS=25000、出力先
+`vlajepa_c30_humanoid_test060_640`):
+
+1. `--policy.chunk_size=30 --policy.n_action_steps=30` (0.23秒→1秒先まで予測させる)
+2. state リーク修正パッチ (§3) を適用済み前提 — スクリプトが起動時に grep で
+   パッチの存在を自己検証し、未適用 (venv 再構築で消えた) なら中断する
 3. `--policy.pre_snap_gripper_action=false --policy.binarize_gripper_action=false`
    (§2、必須)
+4. `--policy.scheduler_decay_steps=$STEPS` — デフォルトは 30,000 固定なので、
+   総 steps を変えたら一致させないと lr が減衰しきらずに終わる
+
+煙試験実測: chunk30 で **2.12 s/step** (chunk7 の 1.89 s/step 比 +12%)、
+25K steps ≈ **14.7h**。**学習結果は未検証 (2026-08-15 夜に実行予定)** —
+完了したらオフライン評価 (下記「教訓」の指標セット) と実機結果をここに追記すること。
 
 ### 教訓
 
@@ -210,6 +225,9 @@ print([s['registry_name'] for s in json.load(open(p))['steps']])"
 
 # K サンプル平均パッチの生存確認 (lerobot 再インストールで消える)
 grep -n "VLAJEPA_SAMPLES" <venv>/lib/python3.12/site-packages/lerobot/policies/vla_jepa/action_head.py
+
+# state リーク修正パッチの生存確認 (同上。v2 学習スクリプトは起動時にこれで自己検証する)
+grep -n "state = state\[:, 0, :\]" <venv>/lib/python3.12/site-packages/lerobot/policies/vla_jepa/modeling_vla_jepa.py
 
 # 学習の loss 推移 (200 step ごとの INFO 行から)
 grep -a -o "loss:[0-9.]*" train_vlajepa.log | tail -5

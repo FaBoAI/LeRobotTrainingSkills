@@ -23,7 +23,8 @@ LeRobot 0.6.0 組み込みの VLA-JEPA ポリシー (`--policy.type=vla_jepa`) �
 - 実機検証済みスクリプトの実例:
   `/home/jetson/RS/run_train06_vlajepa.sh` (学習) /
   `/home/jetson/RS/run_train06_vlajepa_overnight.sh` (夜間ランチャー) /
-  `/home/jetson/RS/run_infer06_vlajepa.sh` (実機推論)
+  `/home/jetson/RS/run_infer06_vlajepa.sh` (実機推論) /
+  `/home/jetson/RS/run_train06_vlajepa_v2.sh` (再挑戦レシピ v2、下記)
 
 # 前提知識 (作業前に必ず理解すること)
 
@@ -104,9 +105,15 @@ lerobot-train \
     --save_freq=5000
 ```
 
-- **再挑戦レシピ** (デフォルトの敗因対策、reference.md §7): 上記に
-  `--policy.chunk_size=30 --policy.n_action_steps=30` を追加し、
-  state リーク修正 (reference.md §3) を先に適用する。
+- **再挑戦レシピ v2** (デフォルトの敗因対策。実装済み 2026-08-15、実例
+  `/home/jetson/RS/run_train06_vlajepa_v2.sh`): 上記に加えて
+  (a) `--policy.chunk_size=30 --policy.n_action_steps=30`、
+  (b) state リーク修正パッチ (reference.md §3) を先に適用 — v2 スクリプトは
+  起動時に grep でパッチの存在を自己検証し、未適用なら中断する、
+  (c) グリッパーハック無効化フラグ2つ、
+  (d) `--policy.scheduler_decay_steps` を `--steps` に一致させる。
+  煙試験実測: chunk30 で 2.12 s/step (chunk7 比 +12%)、25K steps ≈ 14.7h。
+  **学習結果は未検証 (2026-08-15 夜に実行予定)** — 詳細は reference.md §7。
 - **Thor では `PYTORCH_CUDA_ALLOC_CONF` を一切設定しない**
   (expandable_segments はドライバ側リーク、max_split_size_mb は激遅化の実測あり)。
 - `HF_HUB_OFFLINE` は学習では設定しない (初回はバックボーンをダウンロードする)。
@@ -238,7 +245,7 @@ lerobot-rollout \
 | ダウンロードが無言で止まる | hf-xet ハング | `HF_HUB_DISABLE_XET=1` で再実行 (レジューム可) |
 | 学習が step 途中から激遅化/メモリ枯渇 | Thor で `PYTORCH_CUDA_ALLOC_CONF` を設定した | 変数を外してデフォルトアロケータで再実行 |
 | RTC を指定したい | VLA-JEPA は inference_delay 非対応 | sync のみ。RTC が要るなら SmolVLA / pi0 系へ |
-| 動きはするがタスク不成立 | デフォルト chunk_size=7 (静止区間支配の損失) の疑い | reference.md §7 の再挑戦レシピ |
+| 動きはするがタスク不成立 | デフォルト chunk_size=7 (静止区間支配の損失) の疑い | reference.md §7 の再挑戦レシピ v2 (実装済み・結果未検証) |
 
 - 新たな知見 (再挑戦レシピの結果、別ロボットでの検証等) は
   `./reference/reference.md` に追記する。

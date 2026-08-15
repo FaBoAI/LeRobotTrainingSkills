@@ -156,7 +156,7 @@ lerobot-rollout \
   (実測では chunk40 + threshold30 で 0.33 秒ごとの切替カクつき、QT=5 でも
   改善不足で sync を採用。判断材料は reference.md の比較表)。
 
-## Step 6: 継続学習 (ステップ延長)
+## Step 6: 継続学習 (resume でステップ延長)
 
 チェックポイントから総ステップ数を延長して再開できる:
 
@@ -164,11 +164,17 @@ lerobot-rollout \
 lerobot-train \
     --config_path=<output_dir>/checkpoints/last/pretrained_model/train_config.json \
     --resume=true \
-    --steps=<新しい総ステップ数>
+    --steps=<延長後の総ステップ数>
 ```
 
-(実例: `/home/jetson/RS/run_train06_resume.sh` と同じパターン。実測の 15K 完走も
-10K からこの方式で延長した。)
+- 実例: `/home/jetson/RS/run_train06_groot_resume.sh`
+  (延長後の総ステップ数を引数で受け、現チェックポイント以下なら拒否。
+  二重起動・空きメモリの preflight 付き)。実測の 15K 完走も 10K から
+  この方式で延長した。
+- **`--steps` を延長すると lr スケジュール (cosine) は新しい総数に引き伸ばされて
+  再計算される**ため、resume 後も lr が生きて改善が続く (reference.md §4)。
+- 実測 (2026-08-15): 15K→20K の +5K resume で loss 0.027→**0.023**
+  (1.06〜1.08 step/s、+5K ≈ 78分)。
 
 ## Step 7: 知見の記録
 

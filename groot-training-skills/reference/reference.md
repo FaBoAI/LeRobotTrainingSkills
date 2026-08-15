@@ -105,6 +105,26 @@ save_freq=5000。
 | メモリ (mem_gb) | **35.90 で完全に平坦** (増加しない) |
 | loss 推移 | 10K: 0.040 → 15K: **0.027** (5K/10K/15K の実機評価でも段階的に改善) |
 
+### 継続学習 (resume) の実測 (2026-08-15)
+
+`--config_path=.../checkpoints/last/pretrained_model/train_config.json
+--resume=true --steps=<延長後の総数>` で 15K 完了済みから 20K へ +5K 延長した:
+
+| 項目 | 実測値 |
+|---|---|
+| loss | 15K: 0.027 → 20K: **0.023** |
+| スループット | 1.06〜1.08 step/s (新規学習と同等) |
+| +5K 所要 | 約 78 分 |
+
+- **`--steps` を延長すると lr スケジュール (cosine) は新しい総数に引き伸ばされて
+  再計算される**。10K→15K の resume でも lr が生きて改善した実測と整合。
+  20K 完了時点では lr 8.6e-09 まで減衰しきって終了 (= さらに改善を狙うなら
+  再度 --steps を延長して resume すればよい)。
+- 実例スクリプト: `/home/jetson/RS/run_train06_groot_resume.sh`
+  (延長後の総ステップ数を引数で受け、現チェックポイント以下なら拒否。
+  二重起動・空きメモリの preflight 込み — 各チェックの設計は
+  thor-platform-skills の reference.md §3〜§4 参照)。
+
 ### Thor 固有の注意 (ACT 学習で切り分け済み・GR00T にも適用)
 
 - **`PYTORCH_CUDA_ALLOC_CONF` は Thor (iGPU/CUDA13) では一切設定しない**
@@ -182,7 +202,7 @@ unified memory の Thor では学習 (35.9GB) + 推論モデルの同時常駐�
 |---|---|---|---|
 | ACT (chunk50) | 1080p batch2 30K で loss 0.143 / 640×360 batch8 15K で loss 0.114 | sync (RTC 非対応) | 完走・動作成立 |
 | SmolVLA (expert のみ 100M) | batch8 で 4.2 step/s、20K ≈ 80分 | **RTC OK** (chunk50+QT30) | 問題なし |
-| **GR00T N1.7 (1.6B 学習)** | **batch4 で 1.08〜1.12 step/s、15K ≈ 3.7h、loss 0.027** | **sync 採用** (RTC はカクつき) | 滑らか・把持成立 (4Hz スロー) |
+| **GR00T N1.7 (1.6B 学習)** | **batch4 で 1.08〜1.12 step/s、15K ≈ 3.7h、loss 0.027 (+5K resume で 0.023)** | **sync 採用** (RTC はカクつき) | 滑らか・把持成立 (4Hz スロー) |
 | VLA-JEPA | batch4 で 0.53 step/s、30K ≈ 15.8h、loss 0.302 | sync + K=32 平均 (RTC 非対応) | タスク不成立 (chunk=7 が主因の見立て) |
 | FastWAM (6B 学習) | batch4 で 3.04 s/step、15K ≈ 14.2h、loss 0.17 | sync + denoise 3 (RTC 指定禁止) | タスク成功・オフライン指標最良 |
 
