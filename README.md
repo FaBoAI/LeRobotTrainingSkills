@@ -33,7 +33,7 @@ FaBo レシピ(AMP + `use_vae=false` + `chunk_size=50`)による**最軽量・�
 
 ### [vlajepa-training-skills](./vlajepa-training-skills/) — VLA-JEPA
 
-`--policy.type=vla_jepa`(Qwen3-VL-2B + V-JEPA2)。**実機を暴走させる LIBERO 用グリッパーハック(postprocessor 焼き込み)の検出・修正手順**、state のラベルリーク、flow-matching ノイズの K サンプル平均パッチ(`VLAJEPA_SAMPLES`)、実機前のオフライン予測評価(致命バグはこれで発見)を含む。デフォルトレシピではタスク不成立だった記録と、再挑戦レシピ(`chunk_size=30`)まで。
+`--policy.type=vla_jepa`(Qwen3-VL-2B + V-JEPA2)。**デフォルトレシピ(`chunk_size=7`)の罠と、それを修正して実機タスクを成立させた v2 レシピ(`chunk_size=30`、2026-08-16 実機確認)**。同一データ・同一バックボーンで不成立→成立に転じた実証記録(chunk 長が支配的要因)。**実機を暴走させる LIBERO 用グリッパーハック(postprocessor 焼き込み)の検出・修正手順**、state のラベルリーク、flow-matching ノイズの K サンプル平均パッチ(`VLAJEPA_SAMPLES`)、実機前のオフライン予測評価(致命バグはこれで発見)を含む。
 
 ### [fastwam-training-skills](./fastwam-training-skills/) — FastWAM(Wan2.2 5B + action expert 1B)
 
@@ -48,7 +48,7 @@ FaBo レシピ(AMP + `use_vae=false` + `chunk_size=50`)による**最軽量・�
 | ACT | 15K steps・loss 0.114 | sync + `n_action_steps=30` | ◎ タスク成功 |
 | SmolVLA | 20K ≈ 80分・batch8 4.2 step/s・loss 0.034 | RTC(`queue_threshold=30`) | ◎ 滑らか・**推奨** |
 | GR00T N1.7 | 15K ≈ 3.7h・batch4 1.1 step/s・loss 0.027 | sync(RTC はカクつき) | ○ 4Hz スロー再生だが確実 |
-| VLA-JEPA | 30K ≈ 15.8h・batch4 0.53 step/s・loss 0.302 | sync + K=32 平均(RTC 非対応) | × 不成立(chunk=7 が主因の見立て) |
+| VLA-JEPA | 25K ≈ 13.5h・batch4 1.94s/step・loss 0.141(v2: chunk30) | sync + K=8 平均(RTC 非対応) | ◎ v2 レシピで動作良好(デフォルトレシピ chunk7 は×) |
 | FastWAM | 15K ≈ 14.2h・batch4 3.4s/step・loss 0.17 | sync + denoise 3(RTC 非対応) | ◎ 実機動作良好・方向一致 0.89 で最良 |
 
 教訓: **RTC の合否はポリシー × chunk × queue_threshold 依存で、実機評価が必須**(ログの loss だけでは判断できない)。

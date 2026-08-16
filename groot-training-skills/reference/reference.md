@@ -203,7 +203,7 @@ unified memory の Thor では学習 (35.9GB) + 推論モデルの同時常駐�
 | ACT (chunk50) | 1080p batch2 30K で loss 0.143 / 640×360 batch8 15K で loss 0.114 | sync (RTC 非対応) | 完走・動作成立 |
 | SmolVLA (expert のみ 100M) | batch8 で 4.2 step/s、20K ≈ 80分 | **RTC OK** (chunk50+QT30) | 問題なし |
 | **GR00T N1.7 (1.6B 学習)** | **batch4 で 1.08〜1.12 step/s、15K ≈ 3.7h、loss 0.027 (+5K resume で 0.023)** | **sync 採用** (RTC はカクつき) | 滑らか・把持成立 (4Hz スロー) |
-| VLA-JEPA | batch4 で 0.53 step/s、30K ≈ 15.8h、loss 0.302 | sync + K=32 平均 (RTC 非対応) | タスク不成立 (chunk=7 が主因の見立て) |
+| VLA-JEPA (v2: chunk30) | batch4 で 1.94 s/step、25K ≈ 13.5h、loss 0.141 | sync + K=8 平均 (RTC 非対応) | 動作良好 (方向一致 0.93)。デフォルト chunk7 はタスク不成立 |
 | FastWAM (6B 学習) | batch4 で 3.04 s/step、15K ≈ 14.2h、loss 0.17 | sync + denoise 3 (RTC 指定禁止) | タスク成功・オフライン指標最良 |
 
 GR00T は学習が重い部類 (FastWAM に次ぐ) だが、new_embodiment の自動適応により
