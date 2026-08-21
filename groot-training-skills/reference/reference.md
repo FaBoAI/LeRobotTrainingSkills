@@ -196,7 +196,7 @@ unified memory の Thor では学習 (35.9GB) + 推論モデルの同時常駐�
 | 推論がスローモーション (sync) | 仕様 (約 4Hz、CPU 前処理 240ms 律速) | 許容するか前処理最適化 (§5)。学習の質の問題ではない |
 | チェックポイントが無い | `ls <output_dir>/checkpoints/` | `save_freq` と総 steps を確認 (5000 の倍数 + last) |
 
-## 8. 5ポリシー比較の位置づけ (同一データセット・同一ロボット、参考)
+## 8. 6ポリシー比較の位置づけ (同一タスク・同一ロボット、参考。LingBot-VA のみ 58ep 版データセット)
 
 | ポリシー | 学習実測 (Thor) | 推論方式 | 実機評価 |
 |---|---|---|---|
@@ -205,6 +205,7 @@ unified memory の Thor では学習 (35.9GB) + 推論モデルの同時常駐�
 | **GR00T N1.7 (1.6B 学習)** | **batch4 で 1.08〜1.12 step/s、15K ≈ 3.7h、loss 0.027 (+5K resume で 0.023)** | **sync 採用** (RTC はカクつき) | 滑らか・把持成立 (4Hz スロー) |
 | VLA-JEPA (v2: chunk30) | batch4 で 1.94 s/step、25K ≈ 13.5h、loss 0.141 | sync + K=8 平均 (RTC 非対応) | 動作良好 (方向一致 0.93)。デフォルト chunk7 はタスク不成立 |
 | FastWAM (6B 学習) | batch4 で 3.04 s/step、15K ≈ 14.2h、loss 0.17 | sync + denoise 3 (RTC 指定禁止) | タスク成功・オフライン指標最良 |
+| LingBot-VA (5.09B 学習) | batch4 で 1.8 s/step (要パッチ)、30K ≈ 15.3h、loss 0.24 プラトー | sync のみ (RTC 非対応) | オフライン関門不合格 (方向一致 0.66) で実機見送り |
 
 GR00T は学習が重い部類 (FastWAM に次ぐ) だが、new_embodiment の自動適応により
 データセット側の加工 (rename 等) が一切不要という運用上の利点がある。

@@ -278,3 +278,62 @@ http://<JetsonのIP>:9090/?url=rerun%2Bhttp%3A%2F%2F<JetsonのIP>%3A9876%2Fproxy
 
 - ヘッドレスでの `lerobot-record` / `lerobot-rollout` は **`--display_data=false`
   必須**。rerun のチャネル詰まりで制御ループがブロックし、収録が止まる。
+
+## 8. torch.compile / triton を使うポリシーの必須設定 (Thor = sm_110a)
+
+**`torch.compile` / `flex_attention` を使う全ポリシーに影響する普遍知見**
+(2026-08-16 に LingBot-VA 学習で発見・解決。実例は lingbotva-training-skills)。
+
+### 機構
+
+- Thor の GPU は **sm_110a** (arch 110)。triton (実測 3.6.0) は
+  **arch ≥ 100 では同梱の `ptxas-blackwell` を使う**:
+  `triton/backends/nvidia/compiler.py:35` —
+  `return knobs.nvidia.ptxas_blackwell if arch >= 100 else knobs.nvidia.ptxas`。
+- ところが同梱の `ptxas-blackwell` は **CUDA 12.9 ビルド (PTX 8.8 世代) で
+  sm_110a を扱えず**、triton カーネルのアセンブルが失敗する。
+  flex_attention / torch.compile の初回コンパイルで顕在化する。
+
+### 対策 (compile 系ポリシーの学習スクリプトに必ず入れる)
+
+```bash
+# システム CUDA 13 の ptxas に向ける (PTX 9.0 で生成されるようになる。実測で解決)
+export TRITON_PTXAS_BLACKWELL_PATH=/usr/local/cuda/bin/ptxas
+```
+
+- **罠: `TRITON_PTXAS_PATH` は別ノブ** (`triton/knobs.py:491-492` で別変数)。
+  こちらは arch<100 用で、**Thor (arch≥100) では設定しても効かない**。
+  名前が似ているので混同しないこと。
+- venv 再構築や triton 更新後も環境変数方式なので消えないが、学習スクリプトの
+  冒頭で export + 該当ポリシーのパッチ類の自己検証とセットにしておくと安全
+  (実例: `/home/jetson/RS/run_train06_lingbotva.sh`)。
+
+### 診断
+
+```bash
+# 同梱 ptxas-blackwell の世代 (CUDA 12.9 なら本問題に該当)
+<venv>/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell --version | tail -1
+# システム ptxas (CUDA 13.0 = 対策に使う方)
+/usr/local/cuda/bin/ptxas --version | tail -1
+```
+
+## 9. 律速切り分けの定石: 成分の単体実測 (py-spy は使えない)
+
+- **py-spy は ptrace 制限で他人のプロセスに attach できない** (Thor の本環境の
+  実測) → 実行中の学習をプロファイラで覗く手が使えない。
+- 定石 = **学習1ステップを構成する成分を、単体スクリプトで個別に実測して
+  犯人を絞る**。切り分け実績 (LingBot-VA の 18s/step、2026-08-16):
+
+| 成分 | 単体実測 | 判定 |
+|---|---|---|
+| 動画デコード (pyav、1サンプル) | 0.06s | シロ |
+| flex ブロックマスク構築+再コンパイル | 15.7s/回 | 主犯1 (毎ステップ発火していた) |
+| UMT5-XXL の CPU テキストエンコード | 15〜32s/回 | 主犯2 (毎ステップ同一文を再計算) |
+
+- → 2つのメモ化パッチで **17.7s/step → 1.8s/step** (詳細は
+  lingbotva-training-skills reference.md §3)。
+- 着眼点: single-task データセットでは「**毎ステップ同じ入力を再計算して
+  いないか**」(テキストエンコード・マスク構築・トークン化) をまず疑う。
+  GR00T sync の毎ティック前処理 240ms (タスク文トークン化含む) も同族の症状。
+- なお「謎の失速」(徐々に遅くなる) はまず `free -h` (§2〜§3 のメモリ問題) —
+  本節の対象は「最初から一定して遅い」場合の切り分け。

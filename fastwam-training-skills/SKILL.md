@@ -1,6 +1,6 @@
 ---
 name: fastwam-training-skills
-description: LeRobot 0.6.0 の FastWAM ポリシー (--policy.type=fastwam、Wan2.2-TI2V-5B video diffusion + action expert 1B の MoT 共拡散) の学習・推論を Jetson AGX Thor 上で実行するスキル。必須引数 action_dim/proprio_dim と cross-embodiment ロード、base 非互換 config の無警告ランダム初期化の罠、RTC の「静かな誤動作」(禁止)、denoise ステップ削減 (10→3) の無料高速化を含む。40エピソード・15K steps の学習完走と実機評価 (タスク成功、5ポリシー中最良クラス) の実測 (2026-08-14〜15) に基づく。
+description: LeRobot 0.6.0 の FastWAM ポリシー (--policy.type=fastwam、Wan2.2-TI2V-5B video diffusion + action expert 1B の MoT 共拡散) の学習・推論を Jetson AGX Thor 上で実行するスキル。必須引数 action_dim/proprio_dim と cross-embodiment ロード、base 非互換 config の無警告ランダム初期化の罠、RTC の「静かな誤動作」(禁止)、denoise ステップ削減 (10→3) の無料高速化を含む。40エピソード・15K steps の学習完走と実機評価 (タスク成功、6ポリシー中最良クラス) の実測 (2026-08-14〜15) に基づく。
 ---
 
 # 概要
@@ -15,7 +15,7 @@ MoT (Mixture of Transformers) 共拡散モデルで、`--policy.type=fastwam` �
 だけで公開チェックポイント `lerobot/fastwam_base` (12.04GB、apache-2.0) からの
 ファインチューンになる。Jetson AGX Thor + 16軸ヒューマノイド (rs_follower) +
 40エピソードの実機検証 (2026-08-14〜15) で、**オフライン指標・実機とも
-5ポリシー (ACT/SmolVLA/GR00T/VLA-JEPA/FastWAM) 中最良クラス**
+6ポリシー (ACT/SmolVLA/GR00T/VLA-JEPA/FastWAM/LingBot-VA) 中最良クラス**
 (高モーション窓の移動方向一致率 0.87-0.89、実機タスク成功) を確認した。
 
 # 実装前に必ず参照する
